@@ -116,6 +116,80 @@ open CustomTransitionInteraction.xcodeproj
 - **取消返回**: 滑动距离不够时会自动回弹
 - **实时反馈**: 滑动过程中观察页面缩放效果
 
+## CustomTransition 流程简介
+
+### 整体流程概览
+
+```
+用户点击卡片 → 获取卡片位置 → 创建动画器 → 执行转场动画 → 完成转场
+     ↓              ↓             ↓           ↓             ↓
+  延迟0.2秒     记录sourceFrame   Present调用   直接操作视图    布局更新
+```
+
+### 核心步骤
+
+1. **触发阶段**: 用户点击卡片，延迟0.2秒后触发转场
+2. **位置记录**: 获取并记录源卡片的 frame 位置信息
+3. **动画器创建**: 系统调用转场代理，创建 `CardPresentAnimator`
+4. **动画执行**: 直接操作目标视图控制器的视图进行动画
+5. **完成转场**: 动画结束后完成转场
+
+### 实际视图层级结构
+
+基于代码实现，转场动画中的视图层级结构为：
+
+```
+UITransitionView (系统容器视图)
+├── UIVisualEffectView (模糊背景)
+└── CardViewController.view (目标控制器视图)
+    ├── UIScrollView (滚动视图)
+    │   └── ContentView (内容容器)
+    │       ├── CardView (头部卡片 - 16:9比例)
+    │       ├── UILabel (内容标签)
+    │       └── UITextView (详细文本)
+    └── 手势识别器 (左侧边缘 + 顶部下拉)
+```
+
+#### 关键实现特点
+
+1. **直接视图操作**: 不使用临时视图，直接操作目标控制器的视图
+2. **模糊背景**: 使用 `UIVisualEffectView` 提供背景模糊效果
+3. **圆角动画**: 从16像素圆角动画到0圆角
+4. **位置动画**: 从源卡片位置动画到全屏位置
+5. **布局更新**: 动画过程中调用 `viewWillLayoutSubviews()` 和 `viewDidLayoutSubviews()`
+
+#### Present 动画实现
+
+```swift
+// 1. 设置初始状态 (源卡片位置和圆角)
+toViewController.view.frame = sourceFrame
+toViewController.view.layer.cornerRadius = 16
+
+// 2. 执行关键帧动画
+UIView.animateKeyframes(...) {
+    // 动画到最终位置，移除圆角，显示模糊背景
+    toViewController.view.frame = finalFrame
+    toViewController.view.layer.cornerRadius = 0
+    blurView.alpha = 1.0
+}
+```
+
+#### Dismiss 动画实现
+
+```swift
+// 线性动画返回到源位置
+UIView.animate(..., options: [.curveLinear]) {
+    fromViewController.view.frame = destinationFrame
+    fromViewController.view.layer.cornerRadius = 16
+    fromViewController.scrollView.contentOffset = .zero
+    blurView?.alpha = 0
+}
+```
+
+> 💡 **查看完整实现**: 
+> - Present: `CardTransitionAnimator.swift` → `CardPresentAnimator.animateTransition`
+> - Dismiss: `CardTransitionAnimator.swift` → `CardDismissAnimator.animateTransition`
+
 ## UIKit 转场动画原理详解
 
 ### 转场动画系统架构
