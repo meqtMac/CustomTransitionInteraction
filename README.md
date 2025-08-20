@@ -12,6 +12,21 @@
 - 📱 **纯代码 UI 练习**
 - 🎯 **16:9 卡片比例尝试**
 
+## 演示视频
+
+> 📹 **项目功能演示**
+
+<video width="100%" controls preload="metadata">
+  <source src="videos/custom_transition_demo.mpeg" type="video/mpeg">
+  <source src="https://raw.githubusercontent.com/meqtMac/CustomTransitionInteraction/main/videos/custom_transition_demo.mpeg" type="video/mpeg">
+  您的浏览器不支持视频播放。请直接下载查看：<a href="videos/custom_transition_demo.mpeg">演示视频</a>
+</video>
+
+
+*完整演示视频展示了卡片转场动画、手势交互和详情页功能*
+
+*注：如果视频无法播放，请直接访问 `videos/custom_transition_demo.mpeg` 文件*
+
 ## 主要功能
 
 ### 1. 首页卡片展示
